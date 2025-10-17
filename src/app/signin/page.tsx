@@ -1,10 +1,34 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+'use client';
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AuthForm } from "@/components/auth/auth-form";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 export default function SignInPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const auth = getAuth();
+
+  const handleSignIn = async (values: { email: any; password: any; }) => {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Signed In",
+        description: "You have successfully signed in.",
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
@@ -14,18 +38,8 @@ export default function SignInPage() {
             Enter your email below to login to your account.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
-          </div>
-          <Button type="submit" className="w-full">
-            Sign In
-          </Button>
+        <CardContent>
+          <AuthForm mode="signin" onSubmit={handleSignIn} />
         </CardContent>
         <div className="mt-4 p-6 pt-0 text-center text-sm">
           Don&apos;t have an account?{" "}

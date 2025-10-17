@@ -1,10 +1,34 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+'use client';
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AuthForm } from "@/components/auth/auth-form";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const auth = getAuth();
+
+  const handleSignUp = async (values: { email: any; password: any; }) => {
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Account Created",
+        description: "Your account has been successfully created.",
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
@@ -14,22 +38,8 @@ export default function SignUpPage() {
             Create an account to start building your landing pages.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Max Robinson" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
-          </div>
-          <Button type="submit" className="w-full">
-            Create Account
-          </Button>
+        <CardContent>
+          <AuthForm mode="signup" onSubmit={handleSignUp} />
         </CardContent>
         <div className="mt-4 p-6 pt-0 text-center text-sm">
           Already have an account?{" "}

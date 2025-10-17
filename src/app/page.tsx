@@ -1,12 +1,26 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUser } from "@/firebase/auth/use-user";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { BarChart, Edit, Layers3, TabletSmartphone } from "lucide-react";
+import { BarChart, Edit, Layers3, LogOut, TabletSmartphone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getAuth, signOut } from "firebase/auth";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-landing');
+  const { user } = useUser();
+  const auth = getAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -25,12 +39,26 @@ export default function Home() {
             </Link>
           </nav>
           <div className="flex flex-1 items-center justify-end space-x-4">
-            <Button variant="ghost" asChild>
-              <Link href="/signin">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Sign Up</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+                <Button variant="outline" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/signin">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
