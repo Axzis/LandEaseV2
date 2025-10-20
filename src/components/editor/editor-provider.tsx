@@ -22,6 +22,7 @@ interface EditorContextType {
   addComponent: (type: ComponentType, targetIndex?: number) => void;
   selectComponent: (id: string | null) => void;
   updateComponent: (id: string, newProperties: any) => void;
+  deleteComponent: (id: string) => void;
   moveComponent: (activeId: string, overId: string) => void;
   handleDragEnd: (event: DragEndEvent) => void;
   savePage: () => Promise<void>;
@@ -83,6 +84,13 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
       prev.map((c) => (c.id === id ? { ...c, properties: newProperties } : c))
     );
   };
+
+  const deleteComponent = (id: string) => {
+    setComponents((prev) => prev.filter((c) => c.id !== id));
+    if (selectedComponentId === id) {
+      setSelectedComponentId(null);
+    }
+  };
   
   const updatePageSettings = (settings: PageSettings) => {
     setPageSettings(settings);
@@ -102,25 +110,37 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
     if (!over) return;
 
-    if (active.data.current?.isPaletteItem && over.id === 'canvas-droppable') {
-      const type = active.data.current.type as ComponentType;
-      addComponent(type, components.length);
-      return;
-    }
-
-    if (active.data.current?.isPaletteItem && over.id !== 'canvas-droppable') {
+    // Handle dropping a new component from the palette
+    if (active.data.current?.isPaletteItem) {
         const type = active.data.current.type as ComponentType;
-        const overIndex = components.findIndex(c => c.id === over.id);
-        const targetIndex = overIndex !== -1 ? overIndex : components.length;
+        let targetIndex = components.length;
+
+        // If dropped onto the canvas directly
+        if (over.id === 'canvas-droppable') {
+            targetIndex = components.length;
+        } 
+        // If dropped onto another component
+        else {
+            const overIndex = components.findIndex(c => c.id === over.id);
+            if (overIndex !== -1) {
+                targetIndex = overIndex + 1; // Insert after the component it was dropped on
+            }
+        }
+        
         addComponent(type, targetIndex);
         return;
     }
 
+    // Handle reordering existing components
     const activeId = active.id.toString();
     const overId = over.id.toString();
     
     if (activeId !== overId) {
-      moveComponent(activeId, overId);
+      const activeIndex = components.findIndex((c) => c.id === activeId);
+      const overIndex = components.findIndex((c) => c.id === overId);
+       if (activeIndex !== -1 && overIndex !== -1) {
+          setComponents((prev) => arrayMove(prev, activeIndex, overIndex));
+       }
     }
   }, [components]);
 
@@ -153,7 +173,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
       await setDoc(pageDocRef, { published }, { merge: true });
       toast({
         title: `Halaman ${published ? 'Dipublikasikan' : 'Dibatalkan Publikasinya'}`,
-        description: `Halaman Anda sekarang ${published ? 'dapat diakses publik' : 'bersifat pribadi'}.`,
+        description: `Halaman Anda sekarang ${published ? `dapat diakses di /p/${pageId}` : 'bersifat pribadi'}.`,
       });
     } catch (error) {
       console.error("Error updating publish status:", error);
@@ -181,6 +201,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         addComponent,
         selectComponent,
         updateComponent,
+        deleteComponent,
         moveComponent,
         handleDragEnd,
         savePage,

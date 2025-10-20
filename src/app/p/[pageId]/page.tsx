@@ -6,9 +6,8 @@ import { doc } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { Component } from '@/components/editor/editor-components';
 import { RenderedComponent } from '@/components/editor/rendered-component';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FilePlus2 } from 'lucide-react';
+import { FileQuestion, GlobeLock, Loader2 } from 'lucide-react';
 
 type PublishedPageProps = {
   params: {
@@ -39,7 +38,8 @@ export default function PublishedPage({ params }: PublishedPageProps) {
   if (isLoading) {
     return (
       <div className="flex flex-1 w-full flex-col items-center justify-center bg-background p-8">
-        <p>Loading page...</p>
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Memuat halaman...</p>
       </div>
     );
   }
@@ -49,14 +49,16 @@ export default function PublishedPage({ params }: PublishedPageProps) {
       <div className="flex flex-1 w-full flex-col items-center justify-center bg-background p-8">
         <Card className="w-full max-w-lg text-center">
             <CardHeader>
-                <CardTitle>404 - Halaman Tidak Ditemukan</CardTitle>
+                <CardTitle className="flex items-center justify-center gap-2">
+                    <FileQuestion className="h-8 w-8" />
+                    404 - Halaman Tidak Ditemukan
+                </CardTitle>
                 <CardDescription>
-                    Halaman yang Anda cari tidak ada atau belum dipublikasikan.
+                    Halaman yang Anda cari tidak ada atau telah dihapus.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <FilePlus2 className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                     Pastikan URL sudah benar atau coba lagi nanti.
                 </p>
             </CardContent>
@@ -70,14 +72,16 @@ export default function PublishedPage({ params }: PublishedPageProps) {
         <div className="flex flex-1 w-full flex-col items-center justify-center bg-background p-8">
             <Card className="w-full max-w-lg text-center">
                 <CardHeader>
-                    <CardTitle>Halaman Tidak Dipublikasikan</CardTitle>
+                    <CardTitle className="flex items-center justify-center gap-2">
+                        <GlobeLock className="h-8 w-8" />
+                        Halaman Tidak Dipublikasikan
+                    </CardTitle>
                     <CardDescription>
                         Halaman ini saat ini tidak tersedia untuk umum.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <FilePlus2 className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         Pemilik halaman perlu mempublikasikannya agar dapat dilihat.
                     </p>
                 </CardContent>
@@ -87,14 +91,14 @@ export default function PublishedPage({ params }: PublishedPageProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center p-0">
-        <div className="w-full bg-white dark:bg-black" style={{ backgroundColor: pageData.pageBgColor || '#FFFFFF' }}>
-            <div className="container mx-auto p-4 flex flex-col gap-4">
-                {components.map(component => (
-                    <RenderedComponent key={component.id} component={component} />
-                ))}
-            </div>
+    <div className="flex flex-col flex-1" style={{ backgroundColor: pageData.pageBgColor || '#FFFFFF' }}>
+      <div className="container mx-auto p-4">
+        <div className="flex flex-col gap-4">
+            {components.map(component => (
+                <RenderedComponent key={component.id} component={component} />
+            ))}
         </div>
+      </div>
     </div>
   );
 }
