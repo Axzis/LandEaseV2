@@ -7,10 +7,14 @@ import { useEditor } from './editor-provider';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ComponentType } from './editor-components';
+import { Button } from '../ui/button';
+import ImageKit from 'imagekit-javascript';
+import { IKUpload } from 'imagekit-javascript/dist/src/interfaces';
+import { useRef } from 'react';
 
 // Generic Property Editor
 function ComponentPropertyEditor() {
-    const { selectedComponent, updateComponent } = useEditor();
+    const { selectedComponent, updateComponent, deleteComponent } = useEditor();
   
     if (!selectedComponent) {
       return null;
@@ -44,8 +48,11 @@ function ComponentPropertyEditor() {
   
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Properti {selectedComponent.type}</CardTitle>
+           <Button variant="destructive" size="sm" onClick={() => deleteComponent(selectedComponent.id)}>
+            Hapus
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           {renderInspector()}
@@ -144,16 +151,60 @@ function ButtonInspector({ props, onChange }: InspectorProps) {
 }
 
 function ImageInspector({ props, onChange }: InspectorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const imageKit = new ImageKit({
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    authenticationEndpoint: '/api/imagekit/auth',
+  });
+
+  const handleUpload = () => {
+    if (fileInputRef.current?.files && fileInputRef.current.files.length > 0) {
+      const file = fileInputRef.current.files[0];
+      imageKit.upload({
+        file,
+        fileName: file.name,
+      }, (err: Error | null, result: IKUpload | null) => {
+        if (err) {
+          console.error("ImageKit upload error", err);
+          alert("Gagal mengunggah gambar.");
+        } else if (result) {
+          onChange('src', result.url);
+          onChange('width', result.width);
+          onChange('height', result.height);
+        }
+      });
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="prop-src">URL Gambar</Label>
-        <Input id="prop-src" value={props.src} onChange={(e) => onChange('src', e.target.value)} />
-        <p className="text-xs text-muted-foreground">Gunakan URL dari Picsum atau Unsplash.</p>
+        <Label>Sumber Gambar</Label>
+        <div className="flex gap-2">
+            <Input value={props.src} onChange={(e) => onChange('src', e.target.value)} placeholder="URL Gambar" />
+            <Button onClick={triggerFileInput} variant="outline">Unggah</Button>
+            <input type="file" ref={fileInputRef} onChange={handleUpload} className="hidden" accept="image/*" />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="prop-alt">Teks Alternatif</Label>
         <Input id="prop-alt" value={props.alt} onChange={(e) => onChange('alt', e.target.value)} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+            <Label htmlFor="prop-width">Lebar (px)</Label>
+            <Input id="prop-width" type="number" value={props.width} onChange={(e) => onChange('width', parseInt(e.target.value, 10))} />
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="prop-height">Tinggi (px)</Label>
+            <Input id="prop-height" type="number" value={props.height} onChange={(e) => onChange('height', parseInt(e.target.value, 10))} />
+        </div>
       </div>
     </>
   );
