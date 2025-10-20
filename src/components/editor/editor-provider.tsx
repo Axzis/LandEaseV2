@@ -6,13 +6,19 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { useFirestore } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc, setDoc } from 'firebase/firestore';
-import { Component, ComponentType, createNewComponent, getDefaultProperties } from './editor-components';
-import { v4 as uuid } from 'uuid';
+import { Component, ComponentType, createNewComponent } from './editor-components';
+import { useToast } from '@/hooks/use-toast';
+
+interface PageSettings {
+  pageBgColor?: string;
+  // Add other page-level settings here
+}
 
 interface EditorContextType {
   components: Component[];
   selectedComponent: Component | null;
   pageId: string;
+  pageSettings: PageSettings;
   addComponent: (type: ComponentType, targetIndex?: number) => void;
   selectComponent: (id: string | null) => void;
   updateComponent: (id: string, newProperties: any) => void;
@@ -20,6 +26,9 @@ interface EditorContextType {
   handleDragEnd: (event: DragEndEvent) => void;
   savePage: () => Promise<void>;
   isLoading: boolean;
+  updatePageSettings: (settings: PageSettings) => void;
+  publishPage: (published: boolean) => Promise<void>;
+  isPublished: boolean;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -27,23 +36,33 @@ const EditorContext = createContext<EditorContextType | undefined>(undefined);
 export const EditorProvider = ({ children, pageId }: { children: React.ReactNode; pageId: string }) => {
   const [components, setComponents] = useState<Component[]>([]);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+  const [pageSettings, setPageSettings] = useState<PageSettings>({ pageBgColor: '#ffffff' });
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   const firestore = useFirestore();
   const pageDocRef = doc(firestore, 'pages', pageId);
   const { data: pageData, isLoading: isPageLoading } = useDoc(pageDocRef);
+  
+  const isPublished = pageData?.published || false;
 
   useEffect(() => {
-    if (pageData && pageData.content) {
-      try {
-        const parsedContent = JSON.parse(pageData.content);
-        if (Array.isArray(parsedContent)) {
-          setComponents(parsedContent);
+    if (pageData) {
+      if (pageData.content) {
+        try {
+          const parsedContent = JSON.parse(pageData.content);
+          if (Array.isArray(parsedContent)) {
+            setComponents(parsedContent);
+          }
+        } catch (e) {
+          console.error("Failed to parse page content:", e);
+          setComponents([]);
         }
-      } catch (e) {
-        console.error("Failed to parse page content:", e);
-        setComponents([]);
       }
+      // Load page settings
+      setPageSettings({
+        pageBgColor: pageData.pageBgColor || '#ffffff',
+      });
     }
   }, [pageData]);
 
@@ -52,7 +71,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
     const newComponents = [...components];
     newComponents.splice(targetIndex, 0, newComponent);
     setComponents(newComponents);
-    setSelectedComponentId(newComponent.id);
+    selectComponent(newComponent.id);
   };
 
   const selectComponent = (id: string | null) => {
@@ -64,11 +83,16 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
       prev.map((c) => (c.id === id ? { ...c, properties: newProperties } : c))
     );
   };
+  
+  const updatePageSettings = (settings: PageSettings) => {
+    setPageSettings(settings);
+  };
 
   const moveComponent = (activeId: string, overId: string) => {
     setComponents((prev) => {
       const activeIndex = prev.findIndex((c) => c.id === activeId);
       const overIndex = prev.findIndex((c) => c.id === overId);
+      if (activeIndex === -1 || overIndex === -1) return prev;
       return arrayMove(prev, activeIndex, overIndex);
     });
   };
@@ -78,17 +102,20 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
     if (!over) return;
 
-    // Drag from palette to canvas
-    if (active.data.current?.isPaletteItem) {
+    if (active.data.current?.isPaletteItem && over.id === 'canvas-droppable') {
       const type = active.data.current.type as ComponentType;
-      // Find the index to insert at
-      const overIndex = components.findIndex(c => c.id === over.id);
-      const targetIndex = overIndex !== -1 ? overIndex : components.length;
-      addComponent(type, targetIndex);
+      addComponent(type, components.length);
       return;
     }
 
-    // Reorder components in canvas
+    if (active.data.current?.isPaletteItem && over.id !== 'canvas-droppable') {
+        const type = active.data.current.type as ComponentType;
+        const overIndex = components.findIndex(c => c.id === over.id);
+        const targetIndex = overIndex !== -1 ? overIndex : components.length;
+        addComponent(type, targetIndex);
+        return;
+    }
+
     const activeId = active.id.toString();
     const overId = over.id.toString();
     
@@ -100,9 +127,41 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
   const savePage = async () => {
     setIsSaving(true);
     try {
-      await setDoc(pageDocRef, { content: JSON.stringify(components) }, { merge: true });
+      await setDoc(pageDocRef, { 
+        content: JSON.stringify(components),
+        ...pageSettings
+      }, { merge: true });
+      toast({
+        title: "Halaman Disimpan",
+        description: "Perubahan Anda telah berhasil disimpan.",
+      });
     } catch (error) {
       console.error("Error saving page:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan",
+        description: "Terjadi kesalahan saat menyimpan perubahan.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const publishPage = async (published: boolean) => {
+    setIsSaving(true);
+    try {
+      await setDoc(pageDocRef, { published }, { merge: true });
+      toast({
+        title: `Halaman ${published ? 'Dipublikasikan' : 'Dibatalkan Publikasinya'}`,
+        description: `Halaman Anda sekarang ${published ? 'dapat diakses publik' : 'bersifat pribadi'}.`,
+      });
+    } catch (error) {
+      console.error("Error updating publish status:", error);
+       toast({
+        variant: "destructive",
+        title: "Gagal Memperbarui",
+        description: "Terjadi kesalahan saat memperbarui status publikasi.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -118,6 +177,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         components,
         selectedComponent,
         pageId,
+        pageSettings,
         addComponent,
         selectComponent,
         updateComponent,
@@ -125,6 +185,9 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         handleDragEnd,
         savePage,
         isLoading,
+        updatePageSettings,
+        publishPage,
+        isPublished
       }}
     >
       {children}
