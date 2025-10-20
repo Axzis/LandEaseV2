@@ -19,7 +19,7 @@ interface EditorContextType {
   selectedComponent: Component | null;
   pageId: string;
   pageSettings: PageSettings;
-  addComponent: (type: ComponentType, targetIndex?: number) => void;
+  addComponent: (type: ComponentType, targetIndex: number) => void;
   selectComponent: (id: string | null) => void;
   updateComponent: (id: string, newProperties: any) => void;
   deleteComponent: (id: string) => void;
@@ -99,27 +99,28 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-  
+
     // If dropped into nothing, do nothing
     if (!over) return;
-  
+
     const isDraggingPaletteItem = active.data.current?.isPaletteItem;
-  
-    // --- SCENARIO 1: DRAGGING A NEW COMPONENT FROM THE PALETTE ---
+    const isOverCanvas = over.id === 'canvas-droppable';
+    const isOverCanvasComponent = over.data.current?.isCanvasComponent;
+
+    // SCENARIO 1: DRAGGING A NEW COMPONENT FROM THE PALETTE
     if (isDraggingPaletteItem) {
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
-  
-      // If dropping on the main canvas (empty or not)
-      if (over.id === 'canvas-droppable') {
+
+      // Drop on the canvas (empty or between components)
+      if (isOverCanvas) {
         addComponent(componentType, components.length);
         return;
       }
-  
-      // If dropping over an existing component on the canvas
-      const overIsCanvasComponent = over.data.current?.isCanvasComponent;
-      if (overIsCanvasComponent) {
-        const overId = over.id;
+      
+      // Drop over an existing component
+      if (isOverCanvasComponent) {
+        const overId = over.id as string;
         const overIndex = components.findIndex(c => c.id === overId);
         if (overIndex !== -1) {
           // Add the new component right after the one it was dropped on
@@ -128,18 +129,18 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         return;
       }
     }
-  
-    // --- SCENARIO 2: REORDERING AN EXISTING COMPONENT ---
+
+    // SCENARIO 2: REORDERING AN EXISTING COMPONENT ON THE CANVAS
     const isDraggingCanvasComponent = active.data.current?.isCanvasComponent;
-    if (isDraggingCanvasComponent && active.id !== over.id) {
-      setComponents((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+    if (isDraggingCanvasComponent && isOverCanvasComponent && active.id !== over.id) {
+        const activeId = active.id as string;
+        const overId = over.id as string;
         
-        if (oldIndex === -1 || newIndex === -1) return items; // Should not happen
-        
-        return arrayMove(items, oldIndex, newIndex);
-      });
+        setComponents((items) => {
+            const oldIndex = items.findIndex((item) => item.id === activeId);
+            const newIndex = items.findIndex((item) => item.id === overId);
+            return arrayMove(items, oldIndex, newIndex);
+        });
     }
   }, [addComponent, components]);
 

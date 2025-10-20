@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
 import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
 
@@ -16,9 +16,9 @@ function EditorLayout() {
     <DndContext onDragEnd={handleDragEnd}>
       <div className="flex flex-col flex-1 w-full overflow-hidden">
         <EditorHeader />
-        <div className="flex flex-1 w-full overflow-hidden">
+        <div className="flex flex-1 w-full h-full overflow-hidden">
           <EditorSidebar />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto bg-muted/30 p-8">
             <EditorCanvas />
           </main>
         </div>

@@ -19,8 +19,11 @@ export function EditorCanvas() {
 
   return (
     <div 
-      className="flex-1 bg-muted/30 p-8 h-full overflow-y-auto"
-      onClick={() => selectComponent(null)}
+      className="h-full"
+      onClick={(e) => {
+        e.stopPropagation();
+        selectComponent(null);
+      }}
     >
       <div
         ref={setNodeRef}
