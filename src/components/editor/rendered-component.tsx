@@ -77,6 +77,9 @@ export function EditorComponent({ component }: RenderedComponentProps) {
     const { selectComponent, selectedComponent } = useEditor();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: component.id,
+      data: {
+        isCanvasComponent: true,
+      }
     });
   
     const style = {
