@@ -50,7 +50,7 @@ export function ComponentPalette() {
   return (
     <div className="p-4">
       <h2 className="text-lg font-semibold mb-4">Komponen</h2>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 @[180px]:grid-cols-2 gap-4">
         {components.map((component) => (
           <PaletteItem key={component.name} type={component.type}>
             <div className="mb-2">{component.icon}</div>

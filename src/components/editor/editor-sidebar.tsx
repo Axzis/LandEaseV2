@@ -6,7 +6,7 @@ import { Separator } from '../ui/separator';
 
 export function EditorSidebar() {
   return (
-    <aside className="w-full h-full bg-muted/40 flex flex-col overflow-y-auto">
+    <aside className="w-full h-full bg-muted/40 flex flex-col overflow-y-auto @container">
       <ComponentPalette />
       <Separator />
       <div className="flex-1 overflow-y-auto">
