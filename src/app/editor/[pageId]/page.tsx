@@ -9,7 +9,7 @@ import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
 
-function Editor() {
+function EditorLayout() {
   const { handleDragEnd } = useEditor();
 
   return (
@@ -49,7 +49,7 @@ export default function EditorPage() {
 
   return (
     <EditorProvider pageId={pageId}>
-      <Editor />
+      <EditorLayout />
     </EditorProvider>
   );
 }
