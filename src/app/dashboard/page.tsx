@@ -24,17 +24,19 @@ interface Page extends DocumentData {
   createdAt: {
     seconds: number;
     nanoseconds: number;
-  };
+  } | null;
 }
 
 function PageCard({ page, onDelete }: { page: Page; onDelete: (pageId: string) => void }) {
-  const formattedDate = new Date(page.createdAt.seconds * 1000).toLocaleDateString();
+  const formattedDate = page.createdAt 
+    ? new Date(page.createdAt.seconds * 1000).toLocaleDateString()
+    : 'Baru saja';
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{page.name}</CardTitle>
-        <CardDescription>Created on {formattedDate}</CardDescription>
+        <CardDescription>Dibuat pada {formattedDate}</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-between">
         <Button variant="outline" asChild>
