@@ -1,7 +1,6 @@
 'use client';
 
 import { useEditor } from './editor-provider';
-import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -12,9 +11,6 @@ import { GripVertical } from 'lucide-react';
 
 export function EditorCanvas() {
   const { components, selectComponent, pageSettings } = useEditor();
-  const { setNodeRef, isOver } = useDroppable({
-    id: 'canvas-droppable',
-  });
 
   const componentIds = components.map((c) => c.id);
 
@@ -24,16 +20,14 @@ export function EditorCanvas() {
       onClick={() => selectComponent(null)}
     >
       <div
-        ref={setNodeRef}
         style={{ backgroundColor: pageSettings.pageBgColor || '#FFFFFF' }}
         className={cn(
-          "w-full max-w-4xl mx-auto h-full bg-white dark:bg-muted/20 rounded-md shadow-lg flex flex-col items-center p-4 gap-4 transition-all duration-300",
-          isOver && "outline-dashed outline-2 outline-primary scale-[1.01]"
+          "w-full max-w-4xl mx-auto h-full bg-white dark:bg-muted/20 rounded-md shadow-lg flex flex-col items-center p-4 gap-4 transition-all duration-300"
         )}
       >
         <SortableContext items={componentIds} strategy={verticalListSortingStrategy}>
           {components.length > 0 ? (
-            components.map((component, index) => (
+            components.map((component) => (
               <EditorComponent key={component.id} component={component} />
             ))
           ) : (

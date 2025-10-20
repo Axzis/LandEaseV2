@@ -109,44 +109,40 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-  
+
+    // If dropped into nothing, do nothing
     if (!over) {
       return;
     }
-  
-    const isDraggingPaletteItem = active.data.current?.isPaletteItem === true;
-    const isDraggingCanvasComponent = active.data.current?.isCanvasComponent === true;
-  
+
+    const isDraggingPaletteItem = active.data.current?.isPaletteItem;
+    const isDraggingCanvasComponent = active.data.current?.isCanvasComponent;
+
+    // Handle dropping a new component from the palette
     if (isDraggingPaletteItem) {
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
-  
-      const isOverCanvas = over.id === 'canvas-droppable';
-      const isOverAnotherComponent = over.data.current?.isCanvasComponent === true;
-  
-      if (isOverCanvas) {
-        addComponent(componentType, components.length);
-      } else if (isOverAnotherComponent) {
+
+      const isOverCanvasComponent = over.data.current?.isCanvasComponent;
+      
+      if (isOverCanvasComponent) {
+        // Dropped over an existing component, add it after that component
         const overIndex = components.findIndex((c) => c.id === over.id);
         if (overIndex !== -1) {
           addComponent(componentType, overIndex + 1);
         }
+      } else {
+        // Dropped on the canvas itself (or in between components), add to the end
+        addComponent(componentType, components.length);
       }
       return;
     }
-  
+
+    // Handle reordering an existing component
     if (isDraggingCanvasComponent && active.id !== over.id) {
       const activeId = String(active.id);
       const overId = String(over.id);
-  
-      setComponents((prev) => {
-        const activeIndex = prev.findIndex((c) => c.id === activeId);
-        const overIndex = prev.findIndex((c) => c.id === overId);
-        if (activeIndex !== -1 && overIndex !== -1) {
-          return arrayMove(prev, activeIndex, overIndex);
-        }
-        return prev;
-      });
+      moveComponent(activeId, overId);
     }
   }, [components, addComponent]);
 
