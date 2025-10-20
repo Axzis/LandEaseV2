@@ -3,6 +3,10 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { ComponentPalette } from '@/components/editor/component-palette';
+import { EditorCanvas } from '@/components/editor/editor-canvas';
+import { InspectorPanel } from '@/components/editor/inspector-panel';
+import { Splitter, SplitterPanel, SplitterResizeHandle } from '@/components/ui/splitter';
 
 type EditorPageProps = {
   params: {
@@ -29,16 +33,12 @@ export default function EditorPage({ params }: EditorPageProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center p-8">
-      <h1 className="text-4xl font-bold font-headline text-center">
-        Landing Page Editor
-      </h1>
-      <p className="text-muted-foreground mt-4">
-        Editing page:{' '}
-        <span className="font-mono p-1 bg-muted rounded">
-          {params.pageId}
-        </span>
-      </p>
+    <div className="flex flex-1 w-full overflow-hidden">
+        <ComponentPalette />
+        <main className="flex-1 overflow-y-auto">
+          <EditorCanvas />
+        </main>
+        <InspectorPanel />
     </div>
   );
 }
