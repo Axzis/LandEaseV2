@@ -4,16 +4,19 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
-import { EditorProvider } from '@/components/editor/editor-provider';
+import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
 import { DndContext } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
-import { useEditor } from '@/components/editor/editor-provider';
 import {
   Panel,
   PanelGroup,
   PanelResizeHandle,
 } from "react-resizable-panels";
+
+type EditorPageProps = {
+  // params will be handled by useParams hook
+};
 
 function Editor() {
   const { handleDragEnd } = useEditor();
@@ -41,7 +44,7 @@ function Editor() {
 }
 
 
-export default function EditorPage() {
+export default function EditorPage({}: EditorPageProps) {
   const { user, loading } = useUser();
   const router = useRouter();
   const params = useParams();
