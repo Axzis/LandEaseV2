@@ -23,7 +23,6 @@ interface EditorContextType {
   selectComponent: (id: string | null) => void;
   updateComponent: (id: string, newProperties: any) => void;
   deleteComponent: (id: string) => void;
-  moveComponent: (activeId: string, overId: string) => void;
   handleDragEnd: (event: DragEndEvent) => void;
   savePage: () => Promise<void>;
   isLoading: boolean;
@@ -83,7 +82,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
   const updateComponent = (id: string, newProperties: any) => {
     setComponents((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, properties: newProperties } : c))
+      prev.map((c) => (c.id === id ? { ...c, properties: { ...c.properties, ...newProperties } } : c))
     );
   };
 
@@ -95,56 +94,54 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
   };
   
   const updatePageSettings = (settings: PageSettings) => {
-    setPageSettings(settings);
-  };
-
-  const moveComponent = (activeId: string, overId: string) => {
-    setComponents((prev) => {
-      const activeIndex = prev.findIndex((c) => c.id === activeId);
-      const overIndex = prev.findIndex((c) => c.id === overId);
-      if (activeIndex === -1 || overIndex === -1) return prev;
-      return arrayMove(prev, activeIndex, overIndex);
-    });
+    setPageSettings(prev => ({...prev, ...settings}));
   };
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-
+  
     // If dropped into nothing, do nothing
-    if (!over) {
-      return;
-    }
-
+    if (!over) return;
+  
     const isDraggingPaletteItem = active.data.current?.isPaletteItem;
-    const isDraggingCanvasComponent = active.data.current?.isCanvasComponent;
-
-    // Handle dropping a new component from the palette
+  
+    // --- SCENARIO 1: DRAGGING A NEW COMPONENT FROM THE PALETTE ---
     if (isDraggingPaletteItem) {
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
-
-      const isOverCanvasComponent = over.data.current?.isCanvasComponent;
-      
-      if (isOverCanvasComponent) {
-        // Dropped over an existing component, add it after that component
-        const overIndex = components.findIndex((c) => c.id === over.id);
+  
+      // If dropping on the main canvas (empty or not)
+      if (over.id === 'canvas-droppable') {
+        addComponent(componentType, components.length);
+        return;
+      }
+  
+      // If dropping over an existing component on the canvas
+      const overIsCanvasComponent = over.data.current?.isCanvasComponent;
+      if (overIsCanvasComponent) {
+        const overId = over.id;
+        const overIndex = components.findIndex(c => c.id === overId);
         if (overIndex !== -1) {
+          // Add the new component right after the one it was dropped on
           addComponent(componentType, overIndex + 1);
         }
-      } else {
-        // Dropped on the canvas itself (or in between components), add to the end
-        addComponent(componentType, components.length);
+        return;
       }
-      return;
     }
-
-    // Handle reordering an existing component
+  
+    // --- SCENARIO 2: REORDERING AN EXISTING COMPONENT ---
+    const isDraggingCanvasComponent = active.data.current?.isCanvasComponent;
     if (isDraggingCanvasComponent && active.id !== over.id) {
-      const activeId = String(active.id);
-      const overId = String(over.id);
-      moveComponent(activeId, overId);
+      setComponents((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        if (oldIndex === -1 || newIndex === -1) return items; // Should not happen
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
-  }, [components, addComponent]);
+  }, [addComponent, components]);
 
 
   const savePage = async () => {
@@ -205,7 +202,6 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         selectComponent,
         updateComponent,
         deleteComponent,
-        moveComponent,
         handleDragEnd,
         savePage,
         isLoading,
