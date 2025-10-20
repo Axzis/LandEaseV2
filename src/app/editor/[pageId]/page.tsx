@@ -15,10 +15,6 @@ import {
   PanelResizeHandle,
 } from "react-resizable-panels";
 
-type EditorPageProps = {
-  // params is no longer a prop, it will be accessed via useParams hook
-};
-
 function Editor() {
   const { handleDragEnd } = useEditor();
 
@@ -45,7 +41,7 @@ function Editor() {
 }
 
 
-export default function EditorPage({}: EditorPageProps) {
+export default function EditorPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const params = useParams();
