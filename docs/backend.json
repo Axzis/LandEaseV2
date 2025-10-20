@@ -21,7 +21,8 @@
         }
       },
       "required": [
-        "id"
+        "id",
+        "email"
       ]
     },
     "Page": {
@@ -36,7 +37,7 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Page) The UID of the user who owns the landing page."
+          "description": "The UID of the user who owns the landing page."
         },
         "name": {
           "type": "string",
@@ -68,49 +69,25 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
-    "structure": [
+    "collections": [
       {
         "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. The document ID is the same as the Firebase Authentication UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Authentication UID of the user."
-            }
-          ]
-        }
+        "schema": {
+          "$ref": "#/entities/User"
+        },
+        "description": "Stores user profile information. The document ID is the same as the Firebase Authentication UID."
       },
       {
-        "path": "/users/{userId}/pages/{pageId}",
-        "definition": {
-          "entityName": "Page",
-          "schema": {
-            "$ref": "#/backend/entities/Page"
-          },
-          "description": "Stores landing page data created by users. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Authentication UID of the user who owns the landing page."
-            },
-            {
-              "name": "pageId",
-              "description": "The unique identifier of the landing page."
-            }
-          ]
-        }
+        "path": "/pages/{pageId}",
+        "schema": {
+          "$ref": "#/entities/Page"
+        },
+        "description": "Stores landing page data created by users."
       }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure secure and efficient data management for the LandEase application. It leverages path-based ownership and denormalization to achieve authorization independence, simplifying security rules and enabling atomic operations. The structure includes two main collections: `users` and `pages`. The `users` collection stores user profiles, while the `pages` collection stores landing page data created by users. Pages are stored under a path structure based on User ID. This approach guarantees that each user has full control over their own landing pages and profile data.\n\nAuthorization Independence is achieved by avoiding the use of `get()` calls in security rules. The `userId` is present in the `pages` documents. This avoids hierarchical authorization dependencies and allows for atomic operations (transactions/batches) on pages. \n\nQAPs (Rules are not Filters) are supported by segregating data based on ownership and publication status. Path-based ownership allows for secure `list` operations for user-specific data, while the `published` field allows public read access to published pages without compromising the security of unpublished drafts."
+    ]
   }
 }

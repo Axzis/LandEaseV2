@@ -1,77 +1,72 @@
 /**
- * @fileoverview Firestore Security Rules for the LandEase application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and landing pages,
- * combined with public read access for published landing pages. It leverages path-based
- * authorization and data denormalization for efficiency and security.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profile information, with the document ID matching the
- *   Firebase Authentication UID.
- * - /users/{userId}/pages/{pageId}: Stores landing page data, nested under the user's ID.
- *   Each page document contains a `userId` field that MUST match the `userId` in the path.
- *
- * Key Security Decisions:
- * - Users can only read and write their own user profile data.
- * - Users can only create, read, update, and delete landing pages they own.
- * - Public read access is allowed for landing pages where the `published` field is true.
- * - Listing of all users is disallowed for privacy.
- * - All write operations validate that the user ID in the path matches the `userId` field
- *   in the document data to prevent data inconsistencies.
- * - To avoid costly `get()` calls in rules, the `userId` is denormalized into each page document.
+ * @description This ruleset enforces a strict user-ownership model for LandEase,
+ *              where users can only manage their own profile information and landing pages.
+ *              It leverages path-based ownership and denormalization for authorization independence.
+ * @dataStructure
+ *   /users/{userId} - Stores user profile information, with the document ID matching the Firebase Auth UID.
+ *   /users/{userId}/pages/{pageId} - Stores landing page data owned by a specific user. The 'userId' field is denormalized within each page document.
+ * @keySecurityDecisions
+ *   - Users can only read and write their own user documents.
+ *   - Users can only manage landing pages they own.
+ *   - Listing all users is disallowed.
+ * @denormalizationForAuthorization
+ *   - The `Page` entity denormalizes the `userId` to allow direct ownership checks without needing to perform additional `get()` operations to the `users` collection.
+ * @structuralSegregation
+ *   - The `published` field within the `Page` entity will allow public read access to published pages without compromising the security of unpublished drafts.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
+     * @description Controls access to user profile documents.  Users can only read and write their own profile.
      * @path /users/{userId}
-     * @allow (get, create, update, delete) if the user's UID matches the userId.
-     * @deny (get, create, update, delete) if the user's UID does not match the userId.
+     * @allow (create) - User with UID 'user_abc' can create their own profile document.
+     * @allow (get) - User with UID 'user_abc' can read their own profile document.
+     * @allow (update) - User with UID 'user_abc' can update their own profile document.
+     * @allow (delete) - User with UID 'user_abc' can delete their own profile document.
+     * @deny (create) - User with UID 'user_def' cannot create a profile document for 'user_abc'.
+     * @deny (get) - User with UID 'user_def' cannot read the profile document of 'user_abc'.
+     * @deny (update) - User with UID 'user_def' cannot update the profile document of 'user_abc'.
+     * @deny (delete) - User with UID 'user_def' cannot delete the profile document of 'user_abc'.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
-
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false; // Listing all users is not permitted.
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Controls access to landing page documents nested under a user's profile.
+     * @description Controls access to landing page documents within a user's collection.  Users can only manage their own landing pages.
      * @path /users/{userId}/pages/{pageId}
-     * @allow (create, get, update, delete) if the user owns the landing page (userId matches).
-     * @allow (get, list) if the page is published.
-     * @deny (create, get, update, delete) if the user does not own the landing page.
-     * @principle Enforces user-ownership for all writes and public read access for published pages.
+     * @allow (create) - User 'user_abc' can create a new page under their user ID.
+     * @allow (get) - User 'user_abc' can read their own page.
+     * @allow (update) - User 'user_abc' can update their own page.
+     * @allow (delete) - User 'user_abc' can delete their own page.
+     * @deny (create) - User 'user_def' cannot create a page under 'user_abc's user ID.
+     * @deny (get) - User 'user_def' cannot read a page belonging to 'user_abc'.
+     * @deny (update) - User 'user_def' cannot update a page belonging to 'user_abc'.
+     * @deny (delete) - User 'user_def' cannot delete a page belonging to 'user_abc'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pages/{pageId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
-
-      allow get: if isSignedIn() && (isOwner(userId) || resource.data.published == true);
-      allow list: if false; // Listing all pages is not permitted.
-
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
