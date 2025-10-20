@@ -48,7 +48,7 @@ const components = [
 
 export function ComponentPalette() {
   return (
-    <aside className="w-64 h-full bg-muted/40 border-r p-4 overflow-y-auto">
+    <div className="p-4">
       <h2 className="text-lg font-semibold mb-4">Komponen</h2>
       <div className="grid grid-cols-2 gap-4">
         {components.map((component) => (
@@ -58,6 +58,6 @@ export function ComponentPalette() {
           </PaletteItem>
         ))}
       </div>
-    </aside>
+    </div>
   );
 }

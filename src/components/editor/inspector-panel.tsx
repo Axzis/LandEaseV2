@@ -11,6 +11,7 @@ import { Button } from '../ui/button';
 import ImageKit from 'imagekit-javascript';
 import { IKUpload } from 'imagekit-javascript/dist/src/interfaces';
 import { useRef } from 'react';
+import { Separator } from '../ui/separator';
 
 // Generic Property Editor
 function ComponentPropertyEditor() {
@@ -268,9 +269,11 @@ export function InspectorPanel() {
   const { selectedComponent } = useEditor();
 
   return (
-    <aside className="w-80 h-full bg-muted/40 border-l p-4 overflow-y-auto">
+    <div className="p-4">
        <h2 className="text-lg font-semibold mb-4">Properti</h2>
-       {selectedComponent ? <ComponentPropertyEditor /> : <PageSettingsInspector />}
-    </aside>
+       <div className='space-y-4'>
+        {selectedComponent ? <ComponentPropertyEditor /> : <PageSettingsInspector />}
+       </div>
+    </div>
   );
 }

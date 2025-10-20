@@ -3,12 +3,11 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { ComponentPalette } from '@/components/editor/component-palette';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
-import { InspectorPanel } from '@/components/editor/inspector-panel';
 import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
 import { DndContext } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
+import { EditorSidebar } from '@/components/editor/editor-sidebar';
 
 type EditorPageProps = {
   // params is no longer a prop, it will be accessed via useParams hook
@@ -22,11 +21,10 @@ function Editor() {
       <div className="flex flex-1 w-full flex-col overflow-hidden">
         <EditorHeader />
         <div className="flex flex-1 w-full overflow-hidden">
-          <ComponentPalette />
+          <EditorSidebar />
           <main className="flex-1 overflow-y-auto">
             <EditorCanvas />
           </main>
-          <InspectorPanel />
         </div>
       </div>
     </DndContext>
