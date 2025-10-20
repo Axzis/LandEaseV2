@@ -8,15 +8,42 @@ import {
   Columns, 
   FormInput 
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDraggable } from '@dnd-kit/core';
+import { ComponentType } from './editor-components';
+
+interface PaletteItemProps {
+  type: ComponentType;
+  children: React.ReactNode;
+}
+
+function PaletteItem({ type, children }: PaletteItemProps) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: `palette-${type}`,
+    data: {
+      type: type,
+      isPaletteItem: true,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="flex flex-col items-center justify-center p-4 cursor-grab bg-card rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+    >
+      {children}
+    </div>
+  );
+}
 
 const components = [
-  { name: 'Heading', icon: <Heading1 /> },
-  { name: 'Teks', icon: <Type /> },
-  { name: 'Tombol', icon: <Square /> },
-  { name: 'Gambar', icon: <ImageIcon /> },
-  { name: 'Kolom', icon: <Columns /> },
-  { name: 'Formulir', icon: <FormInput /> },
+  { name: 'Heading', icon: <Heading1 />, type: ComponentType.Heading },
+  { name: 'Teks', icon: <Type />, type: ComponentType.Text },
+  { name: 'Tombol', icon: <Square />, type: ComponentType.Button },
+  { name: 'Gambar', icon: <ImageIcon />, type: ComponentType.Image },
+  { name: 'Kolom', icon: <Columns />, type: ComponentType.Columns },
+  { name: 'Formulir', icon: <FormInput />, type: ComponentType.Form },
 ];
 
 export function ComponentPalette() {
@@ -25,13 +52,10 @@ export function ComponentPalette() {
       <h2 className="text-lg font-semibold mb-4">Komponen</h2>
       <div className="grid grid-cols-2 gap-4">
         {components.map((component) => (
-          <Card 
-            key={component.name}
-            className="flex flex-col items-center justify-center p-4 cursor-grab hover:bg-accent hover:text-accent-foreground transition-colors"
-          >
+          <PaletteItem key={component.name} type={component.type}>
             <div className="mb-2">{component.icon}</div>
             <p className="text-sm text-center">{component.name}</p>
-          </Card>
+          </PaletteItem>
         ))}
       </div>
     </aside>

@@ -6,7 +6,9 @@ import { useEffect } from 'react';
 import { ComponentPalette } from '@/components/editor/component-palette';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
 import { InspectorPanel } from '@/components/editor/inspector-panel';
-import { Splitter, SplitterPanel, SplitterResizeHandle } from '@/components/ui/splitter';
+import { EditorProvider } from '@/components/editor/editor-provider';
+import { DndContext } from '@dnd-kit/core';
+import { EditorHeader } from '@/components/editor/editor-header';
 
 type EditorPageProps = {
   params: {
@@ -33,12 +35,17 @@ export default function EditorPage({ params }: EditorPageProps) {
   }
 
   return (
-    <div className="flex flex-1 w-full overflow-hidden">
-        <ComponentPalette />
-        <main className="flex-1 overflow-y-auto">
-          <EditorCanvas />
-        </main>
-        <InspectorPanel />
-    </div>
+    <EditorProvider pageId={params.pageId}>
+      <div className="flex flex-1 w-full flex-col overflow-hidden">
+        <EditorHeader />
+        <div className="flex flex-1 w-full overflow-hidden">
+          <ComponentPalette />
+          <main className="flex-1 overflow-y-auto">
+            <EditorCanvas />
+          </main>
+          <InspectorPanel />
+        </div>
+      </div>
+    </EditorProvider>
   );
 }
