@@ -78,6 +78,7 @@ export function EditorComponent({ component }: RenderedComponentProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: component.id,
       data: {
+        type: component.type,
         isCanvasComponent: true,
       }
     });
