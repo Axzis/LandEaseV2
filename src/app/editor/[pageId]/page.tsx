@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@/firebase/auth/use-user';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { ComponentPalette } from '@/components/editor/component-palette';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
@@ -11,9 +11,7 @@ import { DndContext } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 
 type EditorPageProps = {
-  params: {
-    pageId: string;
-  };
+  // params is no longer a prop, it will be accessed via useParams hook
 };
 
 function Editor() {
@@ -35,10 +33,11 @@ function Editor() {
   );
 }
 
-export default function EditorPage({ params }: EditorPageProps) {
+export default function EditorPage({}: EditorPageProps) {
   const { user, loading } = useUser();
   const router = useRouter();
-  const { pageId } = params;
+  const params = useParams();
+  const pageId = params.pageId as string;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +45,7 @@ export default function EditorPage({ params }: EditorPageProps) {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  if (loading || !user || !pageId) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center p-8">
         <p>Loading...</p>
