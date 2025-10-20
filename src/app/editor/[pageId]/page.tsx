@@ -35,9 +35,10 @@ function Editor() {
   );
 }
 
-export default function EditorPage({ params: { pageId } }: EditorPageProps) {
+export default function EditorPage({ params }: EditorPageProps) {
   const { user, loading } = useUser();
   const router = useRouter();
+  const { pageId } = params;
 
   useEffect(() => {
     if (!loading && !user) {
