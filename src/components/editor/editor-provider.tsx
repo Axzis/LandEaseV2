@@ -67,7 +67,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
     }
   }, [pageData]);
 
-  const addComponent = useCallback((type: ComponentType, targetIndex = components.length) => {
+  const addComponent = useCallback((type: ComponentType, targetIndex: number) => {
     const newComponent = createNewComponent(type);
     setComponents(prev => {
         const newComponents = [...prev];
@@ -75,7 +75,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         return newComponents;
     });
     selectComponent(newComponent.id);
-  }, [components]);
+  }, []);
 
   const selectComponent = (id: string | null) => {
     setSelectedComponentId(id);
@@ -110,7 +110,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
-    // Dropped outside of a valid area
+    // If dropped into nothing, do nothing
     if (!over) {
       return;
     }
@@ -118,30 +118,27 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
     const isDraggingPaletteItem = active.data.current?.isPaletteItem === true;
     const isDraggingCanvasComponent = active.data.current?.isCanvasComponent === true;
 
-    // SCENARIO 1: Dragging a NEW component from the PALETTE
+    // SCENARIO 1: Dragging a NEW component from the PALETTE to the CANVAS
     if (isDraggingPaletteItem) {
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
 
-      const isOverCanvas = over.id === 'canvas-droppable';
-      const isOverAnotherComponent = over.data.current?.isCanvasComponent === true;
+      const overIsCanvas = over.id === 'canvas-droppable';
+      const overIsCanvasComponent = over.data.current?.isCanvasComponent === true;
 
-      // If dropped on the main canvas area or another component
-      if (isOverCanvas || isOverAnotherComponent) {
-        let newIndex = components.length; // Default to adding at the end
+      // If dropping on the empty canvas or an existing component
+      if (overIsCanvas || overIsCanvasComponent) {
+        let newIndex = components.length;
 
-        if (isOverAnotherComponent) {
-            const overId = over.id;
-            const overIndex = components.findIndex(c => c.id === overId);
-            if (overIndex !== -1) {
-                // Heuristic: Check if dropping on top or bottom half of the element
-                const overNode = over.rect;
-                const dropY = event.delta.y > 0 ? overNode.top + overNode.height : overNode.top;
-                const isAfter = event.client.y > dropY;
-                newIndex = isAfter ? overIndex + 1 : overIndex;
-            }
+        // If dropping on an existing component, find its index
+        if (overIsCanvasComponent) {
+          const overId = over.id;
+          const overIndex = components.findIndex(c => c.id === overId);
+          if (overIndex !== -1) {
+            newIndex = overIndex;
+          }
         }
-        
+
         addComponent(componentType, newIndex);
       }
       return;
@@ -152,16 +149,9 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
         const activeId = String(active.id);
         const overId = String(over.id);
         
-        setComponents((prev) => {
-            const activeIndex = prev.findIndex((c) => c.id === activeId);
-            const overIndex = prev.findIndex((c) => c.id === overId);
-            if (activeIndex !== -1 && overIndex !== -1) {
-                return arrayMove(prev, activeIndex, overIndex);
-            }
-            return prev;
-        });
+        moveComponent(activeId, overId);
     }
-  }, [components, addComponent]);
+  }, [components, addComponent, moveComponent]);
 
 
   const savePage = async () => {

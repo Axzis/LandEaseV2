@@ -19,7 +19,7 @@ function Editor() {
         <div className="flex flex-1 w-full overflow-hidden">
           <EditorSidebar />
           <main className="flex-1 overflow-y-auto">
-             <EditorCanvas />
+            <EditorCanvas />
           </main>
         </div>
       </div>
