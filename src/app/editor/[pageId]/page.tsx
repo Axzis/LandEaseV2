@@ -27,7 +27,7 @@ function Editor() {
         <EditorHeader />
         <div className="flex flex-1 w-full overflow-hidden">
            <PanelGroup direction="horizontal">
-            <Panel defaultSize={20} minSize={15} className="min-w-[280px]">
+            <Panel defaultSize={20} minSize={15}>
               <EditorSidebar />
             </Panel>
             <PanelResizeHandle className="w-1 bg-border hover:bg-primary transition-colors data-[resize-handle-state=drag]:bg-primary" />
