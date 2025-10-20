@@ -2,7 +2,7 @@
 
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,7 +14,7 @@ import {
 import { FilePlus2, PlusCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useFirestore } from '@/firebase/provider';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, DocumentData, deleteDoc, doc } from 'firebase/firestore';
 import { CreatePageDialog } from '@/components/dashboard/create-page-dialog';
 
@@ -54,8 +54,8 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const pagesQuery = useMemo(() => {
-    if (!user) return null;
+  const pagesQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
     return query(collection(firestore, 'pages'), where('userId', '==', user.uid));
   }, [firestore, user]);
 
