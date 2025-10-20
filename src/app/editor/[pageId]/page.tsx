@@ -35,7 +35,7 @@ function Editor() {
   );
 }
 
-export default function EditorPage({ params }: EditorPageProps) {
+export default function EditorPage({ params: { pageId } }: EditorPageProps) {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -54,7 +54,7 @@ export default function EditorPage({ params }: EditorPageProps) {
   }
 
   return (
-    <EditorProvider pageId={params.pageId}>
+    <EditorProvider pageId={pageId}>
       <Editor />
     </EditorProvider>
   );
