@@ -109,49 +109,46 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-
-    // If dropped into nothing, do nothing
+  
     if (!over) {
       return;
     }
-
+  
     const isDraggingPaletteItem = active.data.current?.isPaletteItem === true;
     const isDraggingCanvasComponent = active.data.current?.isCanvasComponent === true;
-
-    // SCENARIO 1: Dragging a NEW component from the PALETTE to the CANVAS
+  
     if (isDraggingPaletteItem) {
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
-
-      const overIsCanvas = over.id === 'canvas-droppable';
-      const overIsCanvasComponent = over.data.current?.isCanvasComponent === true;
-
-      // If dropping on the empty canvas or an existing component
-      if (overIsCanvas || overIsCanvasComponent) {
-        let newIndex = components.length;
-
-        // If dropping on an existing component, find its index
-        if (overIsCanvasComponent) {
-          const overId = over.id;
-          const overIndex = components.findIndex(c => c.id === overId);
-          if (overIndex !== -1) {
-            newIndex = overIndex;
-          }
+  
+      const isOverCanvas = over.id === 'canvas-droppable';
+      const isOverAnotherComponent = over.data.current?.isCanvasComponent === true;
+  
+      if (isOverCanvas) {
+        addComponent(componentType, components.length);
+      } else if (isOverAnotherComponent) {
+        const overIndex = components.findIndex((c) => c.id === over.id);
+        if (overIndex !== -1) {
+          addComponent(componentType, overIndex + 1);
         }
-
-        addComponent(componentType, newIndex);
       }
       return;
     }
-
-    // SCENARIO 2: REORDERING an EXISTING component on the canvas
+  
     if (isDraggingCanvasComponent && active.id !== over.id) {
-        const activeId = String(active.id);
-        const overId = String(over.id);
-        
-        moveComponent(activeId, overId);
+      const activeId = String(active.id);
+      const overId = String(over.id);
+  
+      setComponents((prev) => {
+        const activeIndex = prev.findIndex((c) => c.id === activeId);
+        const overIndex = prev.findIndex((c) => c.id === overId);
+        if (activeIndex !== -1 && overIndex !== -1) {
+          return arrayMove(prev, activeIndex, overIndex);
+        }
+        return prev;
+      });
     }
-  }, [components, addComponent, moveComponent]);
+  }, [components, addComponent]);
 
 
   const savePage = async () => {
