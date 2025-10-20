@@ -4,10 +4,11 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
-import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
+import { EditorProvider } from '@/components/editor/editor-provider';
 import { DndContext } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
+import { useEditor } from '@/components/editor/editor-provider';
 import {
   Panel,
   PanelGroup,
@@ -27,7 +28,7 @@ function Editor() {
         <EditorHeader />
         <div className="flex flex-1 w-full overflow-hidden">
            <PanelGroup direction="horizontal">
-            <Panel defaultSize={20} minSize={15}>
+            <Panel defaultSize={20} minSize={10}>
               <EditorSidebar />
             </Panel>
             <PanelResizeHandle className="w-1 bg-border hover:bg-primary transition-colors data-[resize-handle-state=drag]:bg-primary" />
@@ -42,6 +43,7 @@ function Editor() {
     </DndContext>
   );
 }
+
 
 export default function EditorPage({}: EditorPageProps) {
   const { user, loading } = useUser();
