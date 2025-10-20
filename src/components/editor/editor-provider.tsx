@@ -67,13 +67,15 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
     }
   }, [pageData]);
 
-  const addComponent = (type: ComponentType, targetIndex = components.length) => {
+  const addComponent = useCallback((type: ComponentType, targetIndex = components.length) => {
     const newComponent = createNewComponent(type);
-    const newComponents = [...components];
-    newComponents.splice(targetIndex, 0, newComponent);
-    setComponents(newComponents);
+    setComponents(prev => {
+        const newComponents = [...prev];
+        newComponents.splice(targetIndex, 0, newComponent);
+        return newComponents;
+    });
     selectComponent(newComponent.id);
-  };
+  }, [components]);
 
   const selectComponent = (id: string | null) => {
     setSelectedComponentId(id);
@@ -108,7 +110,7 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
-    // If dropped outside a valid droppable area, do nothing
+    // Dropped outside of a valid area
     if (!over) {
       return;
     }
@@ -121,19 +123,26 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
       const componentType = active.data.current?.type as ComponentType;
       if (!componentType) return;
 
-      // Determine where to drop it
       const isOverCanvas = over.id === 'canvas-droppable';
       const isOverAnotherComponent = over.data.current?.isCanvasComponent === true;
 
-      if (isOverCanvas) {
-        // Dropped on the empty canvas area, add to the end
-        addComponent(componentType, components.length);
-      } else if (isOverAnotherComponent) {
-        // Dropped on top of another component, add it after that component
-        const overIndex = components.findIndex((c) => c.id === over.id);
-        if (overIndex !== -1) {
-          addComponent(componentType, overIndex + 1);
+      // If dropped on the main canvas area or another component
+      if (isOverCanvas || isOverAnotherComponent) {
+        let newIndex = components.length; // Default to adding at the end
+
+        if (isOverAnotherComponent) {
+            const overId = over.id;
+            const overIndex = components.findIndex(c => c.id === overId);
+            if (overIndex !== -1) {
+                // Heuristic: Check if dropping on top or bottom half of the element
+                const overNode = over.rect;
+                const dropY = event.delta.y > 0 ? overNode.top + overNode.height : overNode.top;
+                const isAfter = event.client.y > dropY;
+                newIndex = isAfter ? overIndex + 1 : overIndex;
+            }
         }
+        
+        addComponent(componentType, newIndex);
       }
       return;
     }
