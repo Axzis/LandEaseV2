@@ -8,35 +8,19 @@ import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
 import { DndContext } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
-import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
-} from "react-resizable-panels";
-
-type EditorPageProps = {
-  // params will be handled by useParams hook
-};
 
 function Editor() {
   const { handleDragEnd } = useEditor();
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex flex-1 w-full flex-col overflow-hidden">
+      <div className="flex flex-col flex-1 w-full overflow-hidden">
         <EditorHeader />
         <div className="flex flex-1 w-full overflow-hidden">
-           <PanelGroup direction="horizontal">
-            <Panel defaultSize={20} minSize={10}>
-              <EditorSidebar />
-            </Panel>
-            <PanelResizeHandle className="w-1 bg-border hover:bg-primary transition-colors data-[resize-handle-state=drag]:bg-primary" />
-            <Panel>
-              <main className="flex-1 overflow-y-auto">
-                <EditorCanvas />
-              </main>
-            </Panel>
-          </PanelGroup>
+          <EditorSidebar />
+          <main className="flex-1 overflow-y-auto">
+             <EditorCanvas />
+          </main>
         </div>
       </div>
     </DndContext>
@@ -44,7 +28,7 @@ function Editor() {
 }
 
 
-export default function EditorPage({}: EditorPageProps) {
+export default function EditorPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const params = useParams();
