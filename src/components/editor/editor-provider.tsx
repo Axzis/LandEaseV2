@@ -108,44 +108,49 @@ export const EditorProvider = ({ children, pageId }: { children: React.ReactNode
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
   
-    // If we're dragging a new component from the palette
-    if (active.data.current?.isPaletteItem) {
-      const type = active.data.current.type as ComponentType;
-      
-      // If dropping on the canvas itself (even if empty)
-      if (over && over.id === 'canvas-droppable') {
-        addComponent(type, components.length);
+    // If no drop target, do nothing
+    if (!over) return;
+  
+    const isPaletteItem = active.data.current?.isPaletteItem;
+    
+    // --- Scenario 1: Dragging a new component from the palette ---
+    if (isPaletteItem) {
+      const componentType = active.data.current?.type as ComponentType;
+      if (!componentType) return;
+  
+      // Dropped on the main canvas (empty area)
+      if (over.id === 'canvas-droppable') {
+        addComponent(componentType, components.length);
         return;
       }
   
-      // If dropping over an existing component, find its index
-      if (over && over.data.current?.isCanvasComponent) {
-        const overIndex = components.findIndex((c) => c.id === over.id);
-        if (overIndex !== -1) {
-          addComponent(type, overIndex + 1); // Insert after the component
-          return;
-        }
+      // Dropped on another component
+      const overId = over.id.toString();
+      const overIndex = components.findIndex((c) => c.id === overId);
+      if (overIndex !== -1) {
+        // Insert after the component it was dropped on
+        addComponent(componentType, overIndex + 1);
+        return;
       }
-      
-      // Fallback: if 'over' is not a recognized droppable but we are in the canvas area, add to the end.
-      // This can happen if dnd-kit can't resolve the droppable target precisely but the drop event occurs.
-      addComponent(type);
-      return;
     }
   
-    // Handle reordering existing components
-    if (active.id !== over?.id && !active.data.current?.isPaletteItem && over?.id) {
+    // --- Scenario 2: Reordering an existing component ---
+    const isCanvasComponent = active.data.current?.isCanvasComponent;
+    if (isCanvasComponent && over) {
       const activeId = active.id.toString();
       const overId = over.id.toString();
-      
+  
+      if (activeId === overId) return;
+  
       const activeIndex = components.findIndex((c) => c.id === activeId);
       const overIndex = components.findIndex((c) => c.id === overId);
-      
+  
       if (activeIndex !== -1 && overIndex !== -1) {
         setComponents((prev) => arrayMove(prev, activeIndex, overIndex));
       }
     }
   }, [components, addComponent]);
+
 
   const savePage = async () => {
     setIsSaving(true);
