@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the LandEase application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity. This is the same as the Firebase Authentication UID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "Page": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Page",
+      "type": "object",
+      "description": "Represents a landing page created by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Page entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Page) The UID of the user who owns the landing page."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the landing page."
+        },
+        "content": {
+          "type": "string",
+          "description": "A JSON string containing the structure and content of the landing page components."
+        },
+        "published": {
+          "type": "boolean",
+          "description": "Indicates whether the landing page is published and publicly accessible."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp indicating when the landing page was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "content",
+        "published",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. The document ID is the same as the Firebase Authentication UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Authentication UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pages/{pageId}",
+        "definition": {
+          "entityName": "Page",
+          "schema": {
+            "$ref": "#/backend/entities/Page"
+          },
+          "description": "Stores landing page data created by users. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Authentication UID of the user who owns the landing page."
+            },
+            {
+              "name": "pageId",
+              "description": "The unique identifier of the landing page."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure secure and efficient data management for the LandEase application. It leverages path-based ownership and denormalization to achieve authorization independence, simplifying security rules and enabling atomic operations. The structure includes two main collections: `users` and `pages`. The `users` collection stores user profiles, while the `pages` collection stores landing page data created by users. Pages are stored under a path structure based on User ID. This approach guarantees that each user has full control over their own landing pages and profile data.\n\nAuthorization Independence is achieved by avoiding the use of `get()` calls in security rules. The `userId` is present in the `pages` documents. This avoids hierarchical authorization dependencies and allows for atomic operations (transactions/batches) on pages. \n\nQAPs (Rules are not Filters) are supported by segregating data based on ownership and publication status. Path-based ownership allows for secure `list` operations for user-specific data, while the `published` field allows public read access to published pages without compromising the security of unpublished drafts."
+  }
+}
