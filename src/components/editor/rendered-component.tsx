@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { GripVertical } from 'lucide-react';
 
 interface RenderedComponentProps {
   component: Component;
@@ -100,15 +101,22 @@ export function EditorComponent({ component }: RenderedComponentProps) {
       <div
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
         onClick={handleClick}
         className={cn(
-          "p-4 border-2 border-transparent hover:border-primary/50 w-full cursor-grab relative",
+          "p-2 border-2 border-transparent hover:border-primary/50 w-full relative group",
           isSelected && "border-primary ring-2 ring-primary"
         )}
       >
-        <RenderedComponent component={component} />
+        <div 
+            {...attributes}
+            {...listeners}
+            className="absolute -left-8 top-1/2 -translate-y-1/2 p-2 cursor-grab opacity-0 group-hover:opacity-100 bg-background rounded-md shadow"
+        >
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <div className="pointer-events-none">
+            <RenderedComponent component={component} />
+        </div>
       </div>
     );
 }

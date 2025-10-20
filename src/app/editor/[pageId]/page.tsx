@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { EditorCanvas } from '@/components/editor/editor-canvas';
 import { EditorProvider, useEditor } from '@/components/editor/editor-provider';
-import { DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { EditorHeader } from '@/components/editor/editor-header';
 import { EditorSidebar } from '@/components/editor/editor-sidebar';
 
